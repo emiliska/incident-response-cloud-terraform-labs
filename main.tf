@@ -1,5 +1,5 @@
 # Create a resource group
-resource "azurerm_resource_group" "IRLAB" {
+resource "azurerm_resource_group" "myterraformgroup" {
     name     = "production"
     location = "North Central US"
 
@@ -9,13 +9,11 @@ resource "azurerm_resource_group" "IRLAB" {
 }
 
 # Create virtual network
-resource "azurerm_virtual_network" "networks" {
+resource "azurerm_virtual_network" "myterraformnetwork" {
     name                = "IRNET01"
     address_space       = ["10.0.0.0/16"]
     location            = "northcentralus"
     resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
-
-    depends_on = ["${azurerm_resource_group.IRLAB}"]
 
     tags {
         environment = "IRLAB"
@@ -24,23 +22,20 @@ resource "azurerm_virtual_network" "networks" {
 }
 
 # Create subnet
-resource "azurerm_subnet" "subnets" {
+resource "azurerm_subnet" "myterraformsubnet" {
     name                 = "Subnet_IRLAB01"
-    resource_group_name  = "${azurerm_resource_group.myterraformgroup.name}"
-    virtual_network_name = "${azurerm_virtual_network.myterraformnetwork.name}"
+    resource_group_name  = "${azurerm_resource_group.IRLAB.name}"
+    virtual_network_name = "${azurerm_virtual_network.networks.name}"
     address_prefix       = "10.0.1.0/24"
 
-    depends_on = ["${azurerm_virtual_network.networks}"]
 }
 
 # Create public IPs
-resource "azurerm_public_ip" "publicips" {
+resource "azurerm_public_ip" "myterraformpublicip" {
     name                         = "PublicIP_IRLAB01"
     location                     = "northcentralus"
     resource_group_name          = "${azurerm_resource_group.myterraformgroup.name}"
     public_ip_address_allocation = "dynamic"
-
-    depends_on = ["${azurerm_resource_group.IRLAB}"]
 
     tags {
         environment = "IRLAB"
@@ -48,10 +43,10 @@ resource "azurerm_public_ip" "publicips" {
 }
 
 # Create Network Security Group and rule
-resource "azurerm_network_security_group" "netsecgroup" {
+resource "azurerm_network_security_group" "myterraformnsg" {
     name                = "NetworkSecurityGroup_IRLAB01"
     location            = "northcentralus"
-    resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
+    resource_group_name = "${azurerm_resource_group.myterraformnsg.name}"
 
     security_rule {
         name                       = "SSH"
@@ -65,15 +60,13 @@ resource "azurerm_network_security_group" "netsecgroup" {
         destination_address_prefix = "*"
     }
 
-    depends_on = ["${azurerm_resource_group.IRLAB}"]
-
     tags {
         environment = "IRLAB"
     }
 }
 
 # Create network interface
-resource "azurerm_network_interface" "nics" {
+resource "azurerm_network_interface" "myterraformnic" {
     name                      = "NIC001"
     location                  = "northcentralus"
     resource_group_name       = "${azurerm_resource_group.myterraformgroup.name}"
@@ -85,8 +78,6 @@ resource "azurerm_network_interface" "nics" {
         private_ip_address_allocation = "dynamic"
         public_ip_address_id          = "${azurerm_public_ip.myterraformpublicip.id}"
     }
-
-    depends_on = ["${azurerm_virtual_network.networks}"]
 
     tags {
         environment = "IRLAB"
@@ -115,12 +106,10 @@ resource "azurerm_storage_account" "mystorageaccount" {
     tags {
         environment = "IRLAB"
     }
-
-    depends_on = ["${azurerm_storage_account.mystorageaccount}"]
 }
 
 # Create virtual machine XERUS01
-resource "azurerm_virtual_machine" "myterraformvm" {
+resource "azurerm_virtual_machine" "myterraformvmXERUS01" {
     name                  = "XERUS01"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
@@ -165,7 +154,7 @@ resource "azurerm_virtual_machine" "myterraformvm" {
 }
 
 # Create virtual machine XERUS02
-resource "azurerm_virtual_machine" "myterraformvm" {
+resource "azurerm_virtual_machine" "myterraformvmXERUS02" {
     name                  = "VM_XERUS02"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
@@ -210,7 +199,7 @@ resource "azurerm_virtual_machine" "myterraformvm" {
 }
 
 # Create virtual machine WIN2K16A
-resource "azurerm_virtual_machine" "myterraformvm" {
+resource "azurerm_virtual_machine" "myterraformvmWIN2K16A" {
     name                  = "VM_WIN2K16A"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
@@ -247,7 +236,7 @@ resource "azurerm_virtual_machine" "myterraformvm" {
 }
 
 # Create virtual machine WIN2K16B
-resource "azurerm_virtual_machine" "virtualmachines" {
+resource "azurerm_virtual_machine" "myterraformvmWIN2K16b" {
     name                  = "VM_WIN2K16B"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
@@ -281,6 +270,4 @@ resource "azurerm_virtual_machine" "virtualmachines" {
     tags {
         environment = "IRLAB"
     }
-
-    depends_on = ["${azurerm_network_interface.nics}"]
 }
