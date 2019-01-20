@@ -8,6 +8,7 @@ resource "azurerm_virtual_network" "networks" {
     tags {
         environment = "IRLAB"
     }
+
 }
 
 # Create subnet
@@ -16,6 +17,8 @@ resource "azurerm_subnet" "subnets" {
     resource_group_name  = "${azurerm_resource_group.myterraformgroup.name}"
     virtual_network_name = "${azurerm_virtual_network.myterraformnetwork.name}"
     address_prefix       = "10.0.1.0/24"
+
+    depends_on = ["${azurerm_virtual_network.networks}"]
 }
 
 # Create public IPs
@@ -47,6 +50,8 @@ resource "azurerm_network_security_group" "netsecgroup" {
         source_address_prefix      = "*"
         destination_address_prefix = "*"
     }
+
+    depends_on = ["${azurerm_virtual_network.networks}"]
 
     tags {
         environment = "IRLAB"
