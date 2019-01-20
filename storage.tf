@@ -19,4 +19,6 @@ resource "azurerm_storage_account" "mystorageaccount" {
     tags {
         environment = "IRLAB"
     }
+
+    depends_on = ["${azurerm_storage_account.mystorageaccount}"]
 }

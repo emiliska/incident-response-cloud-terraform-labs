@@ -5,6 +5,8 @@ resource "azurerm_virtual_network" "networks" {
     location            = "northcentralus"
     resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
 
+    depends_on = ["${azurerm_resource_group.IRLAB}"]
+
     tags {
         environment = "IRLAB"
     }
@@ -27,6 +29,8 @@ resource "azurerm_public_ip" "publicips" {
     location                     = "northcentralus"
     resource_group_name          = "${azurerm_resource_group.myterraformgroup.name}"
     public_ip_address_allocation = "dynamic"
+
+    depends_on = ["${azurerm_resource_group.IRLAB}"]
 
     tags {
         environment = "IRLAB"
@@ -51,7 +55,7 @@ resource "azurerm_network_security_group" "netsecgroup" {
         destination_address_prefix = "*"
     }
 
-    depends_on = ["${azurerm_virtual_network.networks}"]
+    depends_on = ["${azurerm_resource_group.IRLAB}"]
 
     tags {
         environment = "IRLAB"
@@ -72,7 +76,10 @@ resource "azurerm_network_interface" "nics" {
         public_ip_address_id          = "${azurerm_public_ip.myterraformpublicip.id}"
     }
 
+    depends_on = ["${azurerm_virtual_network.networks}"]
+
     tags {
         environment = "IRLAB"
     }
+
 }
