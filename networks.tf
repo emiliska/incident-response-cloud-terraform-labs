@@ -1,5 +1,5 @@
 # Create virtual network
-resource "azurerm_virtual_network" "myterraformnetwork" {
+resource "azurerm_virtual_network" "networks" {
     name                = "IRNET01"
     address_space       = ["10.0.0.0/16"]
     location            = "northcentralus"
@@ -11,7 +11,7 @@ resource "azurerm_virtual_network" "myterraformnetwork" {
 }
 
 # Create subnet
-resource "azurerm_subnet" "myterraformsubnet" {
+resource "azurerm_subnet" "subnets" {
     name                 = "Subnet_IRLAB01"
     resource_group_name  = "${azurerm_resource_group.myterraformgroup.name}"
     virtual_network_name = "${azurerm_virtual_network.myterraformnetwork.name}"
@@ -19,7 +19,7 @@ resource "azurerm_subnet" "myterraformsubnet" {
 }
 
 # Create public IPs
-resource "azurerm_public_ip" "myterraformpublicip" {
+resource "azurerm_public_ip" "publicips" {
     name                         = "PublicIP_IRLAB01"
     location                     = "northcentralus"
     resource_group_name          = "${azurerm_resource_group.myterraformgroup.name}"
@@ -31,7 +31,7 @@ resource "azurerm_public_ip" "myterraformpublicip" {
 }
 
 # Create Network Security Group and rule
-resource "azurerm_network_security_group" "myterraformnsg" {
+resource "azurerm_network_security_group" "netsecgroup" {
     name                = "NetworkSecurityGroup_IRLAB01"
     location            = "northcentralus"
     resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
@@ -54,7 +54,7 @@ resource "azurerm_network_security_group" "myterraformnsg" {
 }
 
 # Create network interface
-resource "azurerm_network_interface" "myterraformnic" {
+resource "azurerm_network_interface" "nics" {
     name                      = "NIC001"
     location                  = "northcentralus"
     resource_group_name       = "${azurerm_resource_group.myterraformgroup.name}"

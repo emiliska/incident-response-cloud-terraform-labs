@@ -171,7 +171,7 @@ resource "azurerm_virtual_machine" "myterraformvm" {
 }
 
 # Create virtual machine WIN2K16B
-resource "azurerm_virtual_machine" "myterraformvm" {
+resource "azurerm_virtual_machine" "virtualmachines" {
     name                  = "VM_WIN2K16A"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
