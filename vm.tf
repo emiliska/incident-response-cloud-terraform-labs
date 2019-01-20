@@ -205,4 +205,6 @@ resource "azurerm_virtual_machine" "virtualmachines" {
     tags {
         environment = "IRLAB"
     }
+
+    depends_on = ["${azurerm_network_interface.nics}"]
 }
