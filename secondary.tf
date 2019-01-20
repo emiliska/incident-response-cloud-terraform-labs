@@ -1,52 +1,50 @@
-# Create a resource group
+# Create a resource group if it doesn’t exist
 resource "azurerm_resource_group" "myterraformgroup" {
-    name     = "production"
-    location = "North Central US"
+    name     = "myResourceGroup"
+    location = "northcentralus"
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
 
 # Create virtual network
 resource "azurerm_virtual_network" "myterraformnetwork" {
-    name                = "IRNET01"
+    name                = "myVnet"
     address_space       = ["10.0.0.0/16"]
     location            = "northcentralus"
     resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
-
 }
 
 # Create subnet
 resource "azurerm_subnet" "myterraformsubnet" {
-    name                 = "Subnet_IRLAB01"
-    resource_group_name  = "${azurerm_resource_group.IRLAB.name}"
-    virtual_network_name = "${azurerm_virtual_network.networks.name}"
+    name                 = "SUBNETA"
+    resource_group_name  = "${azurerm_resource_group.myterraformgroup.name}"
+    virtual_network_name = "${azurerm_virtual_network.myterraformnetwork.name}"
     address_prefix       = "10.0.1.0/24"
-
 }
 
 # Create public IPs
 resource "azurerm_public_ip" "myterraformpublicip" {
-    name                         = "PublicIP_IRLAB01"
+    name                         = "myPublicIPA"
     location                     = "northcentralus"
     resource_group_name          = "${azurerm_resource_group.myterraformgroup.name}"
     public_ip_address_allocation = "dynamic"
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "myterraformnsg" {
-    name                = "NetworkSecurityGroup_IRLAB01"
+    name                = "myNetworkSecurityGroupA"
     location            = "northcentralus"
-    resource_group_name = "${azurerm_resource_group.myterraformnsg.name}"
+    resource_group_name = "${azurerm_resource_group.myterraformgroup.name}"
 
     security_rule {
         name                       = "SSH"
@@ -61,28 +59,27 @@ resource "azurerm_network_security_group" "myterraformnsg" {
     }
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
 
 # Create network interface
 resource "azurerm_network_interface" "myterraformnic" {
-    name                      = "NIC001"
+    name                      = "myNIC"
     location                  = "northcentralus"
     resource_group_name       = "${azurerm_resource_group.myterraformgroup.name}"
     network_security_group_id = "${azurerm_network_security_group.myterraformnsg.id}"
 
     ip_configuration {
-        name                          = "IP001"
+        name                          = "myNicConfigurationA"
         subnet_id                     = "${azurerm_subnet.myterraformsubnet.id}"
         private_ip_address_allocation = "dynamic"
         public_ip_address_id          = "${azurerm_public_ip.myterraformpublicip.id}"
     }
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
-
 }
 
 # Generate random text for a unique storage account name
@@ -104,7 +101,7 @@ resource "azurerm_storage_account" "mystorageaccount" {
     account_replication_type    = "LRS"
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
 
@@ -149,17 +146,17 @@ resource "azurerm_virtual_machine" "myterraformvmXERUS01" {
     }
 
     tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
 
 # Create virtual machine XERUS02
-resource "azurerm_virtual_machine" "myterraformvmXERUS02" {
-    name                  = "VM_XERUS02"
+resource "azurerm_virtual_machine" "myterraformvmXERUS01" {
+    name                  = "XERUS02"
     location              = "northcentralus"
     resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
     network_interface_ids = ["${azurerm_network_interface.myterraformnic.id}"]
-    vm_size               = "Standard_DS3_v2"
+    vm_size               = "Standard_DS1_v2"
 
     storage_os_disk {
         name              = "myOsDisk"
@@ -176,7 +173,7 @@ resource "azurerm_virtual_machine" "myterraformvmXERUS02" {
     }
 
     os_profile {
-        computer_name  = "XERUS02"
+        computer_name  = "XERUS01"
         admin_username = "azureuser"
     }
 
@@ -194,80 +191,6 @@ resource "azurerm_virtual_machine" "myterraformvmXERUS02" {
     }
 
     tags {
-        environment = "IRLAB"
-    }
-}
-
-# Create virtual machine WIN2K16A
-resource "azurerm_virtual_machine" "myterraformvmWIN2K16A" {
-    name                  = "VM_WIN2K16A"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
-    network_interface_ids = ["${azurerm_network_interface.myterraformnic.id}"]
-    vm_size               = "Standard_DS1_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "MicrosoftWindowsServer"
-        offer     = "WindowsServer"
-        sku       = "2016-Datacenter"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "WIN2K16A"
-        admin_username = "azureuser"
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLAB"
-    }
-}
-
-# Create virtual machine WIN2K16B
-resource "azurerm_virtual_machine" "myterraformvmWIN2K16b" {
-    name                  = "VM_WIN2K16B"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.myterraformgroup.name}"
-    network_interface_ids = ["${azurerm_network_interface.myterraformnic.id}"]
-    vm_size               = "Standard_DS1_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "MicrosoftWindowsServer"
-        offer     = "WindowsServer"
-        sku       = "2016-Datacenter"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "WIN2K16B"
-        admin_username = "azureuser"
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.mystorageaccount.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLAB"
+        environment = "Terraform Demo"
     }
 }
