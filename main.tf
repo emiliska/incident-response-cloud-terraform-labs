@@ -1,50 +1,50 @@
 # Create a resource group if it doesn’t exist
-resource "azurerm_resource_group" "DFIR_group" {
-    name     = "incidentResponseLab"
-    location = "northcentralus"
+resource "azurerm_resource_group" "incident_response" {
+    name     = "lab01"
+    location = "North Central US"
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
 # Create virtual network
-resource "azurerm_virtual_network" "IR_network" {
-    name                = "Network01"
+resource "azurerm_virtual_network" "networks" {
+    name                = "net01"
     address_space       = ["10.0.0.0/16"]
-    location            = "northcentralus"
-    resource_group_name = "${azurerm_resource_group.DFIR_group.name}"
+    location            = "North Central US"
+    resource_group_name = "${azurerm_resource_group.incident_response.name}"
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
 # Create subnet
-resource "azurerm_subnet" "IR_subnet_01" {
-    name                 = "SUBNET01"
-    resource_group_name  = "${azurerm_resource_group.DFIR_group.name}"
-    virtual_network_name = "${azurerm_virtual_network.IR_network.name}"
+resource "azurerm_subnet" "subnets" {
+    name                 = "sub01"
+    resource_group_name  = "${azurerm_resource_group.incident_response.name}"
+    virtual_network_name = "${azurerm_virtual_network.networks.name}"
     address_prefix       = "10.0.1.0/24"
 }
 
 # Create public IPs
-resource "azurerm_public_ip" "IR_publicIP" {
-    name                         = "publicIP01"
-    location                     = "northcentralus"
-    resource_group_name          = "${azurerm_resource_group.DFIR_group.name}"
+resource "azurerm_public_ip" "public_ips" {
+    name                         = "pubip01"
+    location                     = "North Central US"
+    resource_group_name          = "${azurerm_resource_group.incident_response.name}"
     public_ip_address_allocation = "dynamic"
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
 # Create Network Security Group and rule
-resource "azurerm_network_security_group" "IR_nsg_01" {
-    name                = "Network Security Group 01"
-    location            = "northcentralus"
-    resource_group_name = "${azurerm_resource_group.DFIR_group.name}"
+resource "azurerm_network_security_group" "netsecgroup" {
+    name                = "nsg01"
+    location            = "North Central US"
+    resource_group_name = "${azurerm_resource_group.incident_response.name}"
 
     security_rule {
         name                       = "SSH"
@@ -59,26 +59,26 @@ resource "azurerm_network_security_group" "IR_nsg_01" {
     }
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
 # Create network interface
-resource "azurerm_network_interface" "IR_nic_01" {
-    name                      = "NIC01"
-    location                  = "northcentralus"
-    resource_group_name       = "${azurerm_resource_group.DFIR_group.name}"
-    network_security_group_id = "${azurerm_network_security_group.IR_nsg_01.id}"
+resource "azurerm_network_interface" "nics" {
+    name                      = "nic01"
+    location                  = "North Central US"
+    resource_group_name       = "${azurerm_resource_group.incident_response.name}"
+    network_security_group_id = "${azurerm_network_security_group.netsecgroup.id}"
 
     ip_configuration {
-        name                          = "NIC01"
-        subnet_id                     = "${azurerm_subnet.IR_subnet_01.id}"
+        name                          = "nic_config01"
+        subnet_id                     = "${azurerm_subnet.subnets.id}"
         private_ip_address_allocation = "dynamic"
-        public_ip_address_id          = "${azurerm_public_ip.IR_public_ip.id}"
+        public_ip_address_id          = "${azurerm_public_ip.public_ips.id}"
     }
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
@@ -86,38 +86,38 @@ resource "azurerm_network_interface" "IR_nic_01" {
 resource "random_id" "randomId" {
     keepers = {
         # Generate a new ID only when a new resource group is defined
-        resource_group = "${azurerm_resource_group.DFIR_group.name}"
+        resource_group = "${azurerm_resource_group.incident_response.name}"
     }
 
     byte_length = 8
 }
 
 # Create storage account for boot diagnostics
-resource "azurerm_storage_account" "IR_storage_account_01" {
+resource "azurerm_storage_account" "storage" {
     name                        = "diag${random_id.randomId.hex}"
-    resource_group_name         = "${azurerm_resource_group.DFIR_group.name}"
-    location                    = "northcentralus"
+    resource_group_name         = "${azurerm_resource_group.incident_response.name}"
+    location                    = "North Central US"
     account_tier                = "Standard"
     account_replication_type    = "LRS"
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
-# Create virtual machine DETMNG001
-resource "azurerm_virtual_machine" "myterraformvmDETMNG001" {
-    name                  = "DETMNG001"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
+# Create virtual machine DETENG01
+resource "azurerm_virtual_machine" "DETENG01" {
+    name                  = "DETENG01"
+    location              = "North Central US"
+    resource_group_name   = "${azurerm_resource_group.incident_response.name}"
+    network_interface_ids = ["${azurerm_network_interface.nics.id}"]
     vm_size               = "Standard_DS1_v2"
 
     storage_os_disk {
         name              = "myOsDisk"
         caching           = "ReadWrite"
         create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
+        managed_disk_type = "Standard_LRS"
     }
 
     storage_image_reference {
@@ -128,34 +128,122 @@ resource "azurerm_virtual_machine" "myterraformvmDETMNG001" {
     }
 
     os_profile {
-        computer_name  = "DETMNG002"
-        admin_username = "azureuser"
+        computer_name  = "DETENG01"
+        admin_username = "mitchell.hashimoto"
+        admin_password = "Hashicorp2012!"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = "false"
     }
 
     boot_diagnostics {
         enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
+        storage_uri = "${azurerm_storage_account.storage.primary_blob_endpoint}"
     }
 
     tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
 
-
-# Create virtual machine DETMNG002
-resource "azurerm_virtual_machine" "myterraformvmDETMNG002" {
-    name                  = "DETMNG002"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
+# Create virtual machine AAENG01
+resource "azurerm_virtual_machine" "AAENG01" {
+    name                  = "AAENG01"
+    location              = "North Central US"
+    resource_group_name   = "${azurerm_resource_group.incident_response.name}"
+    network_interface_ids = ["${azurerm_network_interface.nics.id}"]
     vm_size               = "Standard_DS1_v2"
 
     storage_os_disk {
         name              = "myOsDisk"
         caching           = "ReadWrite"
         create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
+        managed_disk_type = "Standard_LRS"
+    }
+
+    storage_image_reference {
+        publisher = "Canonical"
+        offer     = "UbuntuServer"
+        sku       = "12.04.3-LTS"
+        version   = "12.04.201401270"
+    }
+
+    os_profile {
+        computer_name  = "AAENG01"
+        admin_username = "armon.dadgar"
+        admin_password = "Hashicorp2012!"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = "false"
+    }
+
+    boot_diagnostics {
+        enabled = "true"
+        storage_uri = "${azurerm_storage_account.storage.primary_blob_endpoint}"
+    }
+
+    tags {
+        environment = "IR"
+    }
+}
+
+# Create virtual machine DETDNS01
+resource "azurerm_virtual_machine" "DETDNS01" {
+    name                  = "DETDNS01"
+    location              = "North Central US"
+    resource_group_name   = "${azurerm_resource_group.incident_response.name}"
+    network_interface_ids = ["${azurerm_network_interface.nics.id}"]
+    vm_size               = "Standard_DS1_v2"
+
+    storage_os_disk {
+        name              = "myOsDisk"
+        caching           = "ReadWrite"
+        create_option     = "FromImage"
+        managed_disk_type = "Standard_LRS"
+    }
+
+    storage_image_reference {
+        publisher = "MicrosoftWindowsServer"
+        offer     = "WindowsServer"
+        sku       = "2016-Datacenter"
+        version   = "latest"
+    }
+
+    os_profile {
+        computer_name  = "DETDNS01"
+        admin_username = "admin"
+        admin_password = "ZuNdCXCLAc"
+    }
+
+    os_profile_windows_config {
+        disable_password_authentication = "false"
+    }
+
+    boot_diagnostics {
+        enabled = "true"
+        storage_uri = "${azurerm_storage_account.storage.primary_blob_endpoint}"
+    }
+
+    tags {
+        environment = "IR"
+    }
+}
+
+# Create virtual machine AADNS01
+resource "azurerm_virtual_machine" "AADNS01" {
+    name                  = "AADNS01"
+    location              = "North Central US"
+    resource_group_name   = "${azurerm_resource_group.incident_response.name}"
+    network_interface_ids = ["${azurerm_network_interface.nics.id}"]
+    vm_size               = "Standard_DS1_v2"
+
+    storage_os_disk {
+        name              = "myOsDisk"
+        caching           = "ReadWrite"
+        create_option     = "FromImage"
+        managed_disk_type = "Standard_LRS"
     }
 
     storage_image_reference {
@@ -166,180 +254,21 @@ resource "azurerm_virtual_machine" "myterraformvmDETMNG002" {
     }
 
     os_profile {
-        computer_name  = "DETMNG002"
-        admin_username = "azureuser"
+        computer_name  = "AADNS01"
+        admin_username = "admin"
+        admin_password = "aqL386wjq3wY"
+    }
+
+    os_profile_windows_config {
+        disable_password_authentication = "false"
     }
 
     boot_diagnostics {
         enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
+        storage_uri = "${azurerm_storage_account.storage.primary_blob_endpoint}"
     }
 
     tags {
-        environment = "IRLab01"
-    }
-}
-
-# Create virtual machine XERUS01
-resource "azurerm_virtual_machine" "myterraformvmXERUS01" {
-    name                  = "XERUS01"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
-    vm_size               = "Standard_DS3_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04.0-LTS"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "XERUS01"
-        admin_username = "azureuser"
-    }
-
-    os_profile_linux_config {
-        disable_password_authentication = true
-        ssh_keys {
-            path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "ssh-rsa AAAAB3Nz{snip}hwhqT9h"
-        }
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLab01"
-    }
-}
-
-# Create virtual machine XERUS02
-resource "azurerm_virtual_machine" "myterraformvmXERUS02" {
-    name                  = "XERUS02"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
-    vm_size               = "Standard_DS1_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "Canonical"
-        offer     = "UbuntuServer"
-        sku       = "16.04.0-LTS"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "XERUS02"
-        admin_username = "azureuser"
-    }
-
-    os_profile_linux_config {
-        disable_password_authentication = true
-        ssh_keys {
-            path     = "/home/azureuser/.ssh/authorized_keys"
-            key_data = "ssh-rsa AAAAB3Nz{snip}hwhqT9h"
-        }
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLab01"
-    }
-}
-
-# Create virtual machine WIN2K16A
-resource "azurerm_virtual_machine" "myterraformvmWIN2K16A" {
-    name                  = "WIN2K16A"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
-    vm_size               = "Standard_DS1_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "MicrosoftWindowsServer"
-        offer     = "WindowsServer"
-        sku       = "2016-Datacenter"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "WIN2K16A"
-        admin_username = "azureuser"
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLab01"
-    }
-}
-
-# Create virtual machine WIN2K16B
-resource "azurerm_virtual_machine" "myterraformvmWIN2K16B" {
-    name                  = "WIN2K16B"
-    location              = "northcentralus"
-    resource_group_name   = "${azurerm_resource_group.DFIR_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.IR_nic_01.id}"]
-    vm_size               = "Standard_DS1_v2"
-
-    storage_os_disk {
-        name              = "myOsDisk"
-        caching           = "ReadWrite"
-        create_option     = "FromImage"
-        managed_disk_type = "Premium_LRS"
-    }
-
-    storage_image_reference {
-        publisher = "MicrosoftWindowsServer"
-        offer     = "WindowsServer"
-        sku       = "2016-Datacenter"
-        version   = "latest"
-    }
-
-    os_profile {
-        computer_name  = "WIN2K16B"
-        admin_username = "azureuser"
-    }
-
-    boot_diagnostics {
-        enabled = "true"
-        storage_uri = "${azurerm_storage_account.IR_storage_account_01.primary_blob_endpoint}"
-    }
-
-    tags {
-        environment = "IRLab01"
+        environment = "IR"
     }
 }
