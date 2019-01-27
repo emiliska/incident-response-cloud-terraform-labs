@@ -40,6 +40,25 @@ resource "azurerm_public_ip" "public_ips" {
     }
 }
 
+# Create a firewall
+
+resource "azurerm_firewall" "Firewalls" {
+    name                = "firewall01"
+    location            = "${azurerm_resource_group.incident_response.location}"
+    resource_group_name = "${azurerm_resource_group.incident_response.name}"
+
+    ip_configuration {
+        name                 = "configuration"
+        subnet_id            = "${azurerm_subnet.subnets.id}"
+        public_ip_address_id = "${azurerm_public_ip.public_ips.id}"
+    }
+
+    tags {
+        environment = "IR"
+    }
+
+}
+
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "netsecgroup" {
     name                = "nsg01"
@@ -104,6 +123,10 @@ resource "azurerm_storage_account" "storage" {
         environment = "IR"
     }
 }
+
+######################
+## VIRTUAL MACHINES ##
+######################
 
 # Create virtual machine DETENG01
 resource "azurerm_virtual_machine" "DETENG01" {
@@ -217,10 +240,6 @@ resource "azurerm_virtual_machine" "DETDNS01" {
         admin_password = "ZuNdCXCLAc"
     }
 
-    os_profile_windows_config {
-        disable_password_authentication = "false"
-    }
-
     boot_diagnostics {
         enabled = "true"
         storage_uri = "${azurerm_storage_account.storage.primary_blob_endpoint}"
@@ -257,10 +276,6 @@ resource "azurerm_virtual_machine" "AADNS01" {
         computer_name  = "AADNS01"
         admin_username = "admin"
         admin_password = "aqL386wjq3wY"
-    }
-
-    os_profile_windows_config {
-        disable_password_authentication = "false"
     }
 
     boot_diagnostics {
